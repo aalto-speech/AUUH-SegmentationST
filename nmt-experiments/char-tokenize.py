@@ -36,12 +36,12 @@ def process_line(line):
         source, target = line.split("\t")
     return tokenize(source), tokenize(target)
 
-def run_on_file(input, out_prefix):
+def run_on_file(inputfile, out_prefix):
     src_vocab = set()
     tgt_vocab = set()
     outpath = pathlib.Path(out_prefix)
     outpath.parent.mkdir(parents=True,exist_ok=True)
-    with open(input) as fin, \
+    with open(inputfile) as fin, \
          open(out_prefix+".src.txt", "w") as fo_srctxt, \
          open(out_prefix+".tgt.txt", "w") as fo_tgttxt: 
         for line in fin:
