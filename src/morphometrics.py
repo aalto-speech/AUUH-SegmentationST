@@ -188,5 +188,7 @@ if __name__ == '__main__':
     fscore = 2 * pre * rec / (pre + rec)
     ruamel_yaml = ruamel.yaml.YAML(typ='safe', pure=True)
     ruamel_yaml.dump({
-        'precision': round(pre, 4), 'recall': round(rec, 4), 'f-score': round(fscore, 4)
+        'metric': args.metric,
+        'files': {'reference': args.goldFile.name, 'predictions': args.predFile.name},
+        'scores': {'precision': round(pre, 4), 'recall': round(rec, 4), 'f-score': round(fscore, 4)}
     }, stream=args.output)

@@ -1,0 +1,18 @@
+
+WEIGHTS = 0.001 0.002 0.005 0.01 0.02 0.05 0.1 0.2 0.5 1.0 2.0
+
+PREFIXES = $(addprefix baseline_w,$(WEIGHTS))
+MODELS = $(addsuffix .bin,$(PREFIXES))
+DEVSETS = $(addsuffix .dev.txt,$(PREFIXES))
+SCORES = $(addsuffix .scores.yaml,$(PREFIXES))
+
+all: $(MODELS) $(DEVSETS) $(SCORES)
+
+baseline_w%.bin: combined.wordcounts.txt
+	morfessor-train -s $@ --traindata-list --skips -w $* $<
+
+baseline_w%.dev.txt: baseline_w%.bin dev.words.txt
+	morfessor-segment -l $(word 1,$^) --output-format "{compound}\t{analysis}\n" -o $@ $(word 2,$^)
+
+baseline_w%.scores.yaml: baseline_w%.dev.txt dev.seg.txt
+	python ../../src/morphometrics.py -m comma-b0 dev.seg.txt baseline_w$*.dev.txt $@

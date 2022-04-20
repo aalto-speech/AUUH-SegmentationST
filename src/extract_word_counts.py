@@ -70,8 +70,6 @@ if __name__ == '__main__':
     for line in tqdm.tqdm(args.corpus):
         for block in line.split():
             word = extractor.clean_word(block)
-            if '&' in block and word:
-                logger.info("%s -> %s", block, word)
             if word:
                 counter[word] += 1
 
