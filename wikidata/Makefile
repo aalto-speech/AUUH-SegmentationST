@@ -14,6 +14,7 @@ LONGCODES = ces eng fra hun spa ita lat rus mon
 ARTICLES = $(addsuffix wiki-20220401-pages-articles.xml.bz2,$(SHORTCODES))
 EXTRACTED = $(addsuffix _text,$(LONGCODES))
 RAWTEXT = $(addsuffix _text.raw.gz,$(LONGCODES))
+WORDCOUNTS = $(addsuffix _wordcounts.txt,$(LONGCODES))
 
 .PHONY: articles extracted
 articles: $(ARTICLES)
@@ -55,3 +56,12 @@ mon_text: mnwiki-20220401-pages-articles.xml.bz2
 
 %_text.raw.gz: %_text
 	cat $</*/wiki_* | jq .text -r | gzip > $@
+
+mon_wordcounts.txt: mon_text.raw.gz
+	python ../src/extract_word_counts.py -s Cyrillic $< $@
+
+rus_wordcounts.txt: rus_text.raw.gz
+	python ../src/extract_word_counts.py -s Cyrillic $< $@
+
+%_wordcounts.txt: %_text.raw.gz
+	python ../src/extract_word_counts.py -s Latin $< $@
