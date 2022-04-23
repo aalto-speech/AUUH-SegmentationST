@@ -9,7 +9,7 @@ import os
 import numpy as np
 import ruamel.yaml
 import scipy.sparse
-from scipy.sparse import lil_array
+from scipy.sparse import lil_matrix
 import tqdm
 
 
@@ -75,7 +75,7 @@ class AnalysisSet:
     def to_word_morpheme_matrix(self, word_index, selected_alternatives=None, binary=True):
         """Return bipartite word-morpheme graph as a sparse matrix"""
         n_words = len(word_index)
-        array = lil_array((n_words, self.n_morphs), dtype=int)
+        array = lil_matrix((n_words, self.n_morphs), dtype=int)
         for word, analyses in tqdm.tqdm(self.analyses.items()):
             if word not in word_index:
                 continue
@@ -125,7 +125,7 @@ class AnalysisSet:
 
         """
         n_words = len(word_index)
-        array = lil_array((n_words, n_words), dtype=int)
+        array = lil_matrix((n_words, n_words), dtype=int)
         for word, analysis in tqdm.tqdm(self.analyses.items()):
             if word not in word_index:
                 continue
