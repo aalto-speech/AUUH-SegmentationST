@@ -1,14 +1,16 @@
 
-# LONGCODES = ces eng fra hun spa ita lat rus mon
-LONGCODES = lat mon
+LONGCODES = eng ces fra hun spa ita lat rus mon
 DATASOURCE = ../data
 WIKIDATASOURCE = ../wikidata
 
-WORDCOUNTS = $(addsuffix .train.wordcounts.txt,$(LONGCODES)) $(addsuffix .combined.wordcounts.txt,$(LONGCODES))
+WORDCOUNTS = $(addsuffix .wiki.wordcounts.txt,$(LONGCODES)) $(addsuffix .train.wordcounts.txt,$(LONGCODES)) $(addsuffix .combined.wordcounts.txt,$(LONGCODES))
 DEV_WORDS = $(addsuffix .dev.words.txt,$(LONGCODES))
 DEV_SEGS = $(addsuffix .dev.seg.txt,$(LONGCODES))
+TUNINGS = $(addsuffix _tuning.done,$(LONGCODES))
 
 datasets: $(WORDCOUNTS) $(DEV_WORDS) $(DEV_SEGS)
+
+tunings: $(TUNINGS)
 
 # Training data sentences
 %.sentence.train.txt: $(DATASOURCE)/%.sentence.train.tsv
@@ -25,9 +27,12 @@ mon.sentence.train.wordcounts.txt: \
 # Training data words (with count 1)
 # NOTE: Some Latin words in the list have spaces 
 %.train.wordcounts.txt: $(DATASOURCE)/%.word.train.tsv
-	cat $< | cut -f 1 | tr -d ' ' | sort | sed 's/^/1 /' > $@
+	cat $< | cut -f 1 | tr -d ' ' | grep -v '^ *$$' | sort | sed 's/^/1 /' > $@
 
 # Words from Wikipedia
+eng.wiki.wordcounts.txt: $(WIKIDATASOURCE)/eng_wordcounts.txt
+	python ../src/join_word_counts.py --max-length 40 --min-count 3 --only-lowercase $< $@
+
 %.wiki.wordcounts.txt: $(WIKIDATASOURCE)/%_wordcounts.txt
 	python ../src/join_word_counts.py --max-length 40 --min-count 2 --lowercase $< $@
 

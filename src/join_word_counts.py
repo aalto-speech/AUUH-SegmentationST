@@ -16,6 +16,7 @@ if __name__ == '__main__':
     parser.add_argument('--max-length', '-l', type=int, help='max word length to include')
     parser.add_argument('--min-count', '-c', type=int, default=1, help='min word count to include')
     parser.add_argument('--lowercase', action='store_true', help='lowercase input words')
+    parser.add_argument('--only-lowercase', action='store_true', help='include only lowercase words')
     parser.add_argument('infiles', type=argparse.FileType('r'), nargs='+', help='input files')
     parser.add_argument('outfile', type=argparse.FileType('w'), default='-', help='output file')
     args = parser.parse_args()
@@ -33,5 +34,7 @@ if __name__ == '__main__':
         if args.max_length and len(word) > args.max_length:
             continue
         if count < args.min_count:
+            continue
+        if args.only_lowercase and not word.islower():
             continue
         args.outfile.write(f"{count} {word}\n")
