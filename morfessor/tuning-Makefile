@@ -15,4 +15,4 @@ baseline_w%.dev.txt: baseline_w%.bin dev.words.txt
 	morfessor-segment -l $(word 1,$^) --output-format "{compound}\t{analysis}\n" -o $@ $(word 2,$^)
 
 baseline_w%.scores.yaml: baseline_w%.dev.txt dev.seg.txt
-	python ../../src/morphometrics.py -m comma-b0 dev.seg.txt baseline_w$*.dev.txt $@
+	python ../../src/morphometrics.py -m emma-2 dev.seg.txt baseline_w$*.dev.txt $@
