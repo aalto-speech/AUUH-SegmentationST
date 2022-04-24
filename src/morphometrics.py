@@ -9,7 +9,7 @@ import os
 import numpy as np
 import ruamel.yaml
 import scipy.sparse
-from scipy.sparse import lil_matrix
+from scipy.sparse import lil_matrix, csr_matrix
 import tqdm
 
 
@@ -151,7 +151,7 @@ def word_graph_recall(gold, pred):
     with np.errstate(divide='ignore', invalid='ignore'):
         recall = recall / totals
     recall = recall[~np.isnan(recall)]
-    return recall.mean().item() if len(recall) else 1.0
+    return recall.mean().item() if recall.shape[1] else 1.0
 
 
 def comma(goldlist, predlist, diagonals=False):
@@ -167,9 +167,65 @@ def comma(goldlist, predlist, diagonals=False):
     return pre, rec
 
 
+def morph_assignment_matrix(morph_cooc_graph):
+    """Return sparse morph assignment matrix"""
+    assign = morph_cooc_graph.argmax(axis=1).A1  # A1 is equivalent to np.asarray(x).ravel()
+    logger.debug("Assignment vector: %s", assign)
+    dim = assign.shape[0]
+    return csr_matrix((np.ones(dim), (assign, np.arange(dim))),
+                      shape=(morph_cooc_graph.shape[1], dim), dtype=int)
+
+
+def morph_graph_recall(gold, pred):
+    gold_totals = gold.sum(1)
+    pred_totals = pred.sum(1)
+    diff = gold_totals - pred_totals
+    error = (abs(diff) + diff) / 2
+    recall = (gold_totals - error).sum(1)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        recall = recall / gold_totals
+    recall = recall[~np.isnan(recall)]
+    return recall.mean().item() if recall.shape[1] else 1.0
+
+
+def emma2(goldlist, predlist):
+    windex = predlist.get_word_index()
+    logger.info("Creating gold word-morpheme matrix")
+    gold_word_morpheme_graph = goldlist.to_word_morpheme_matrix(windex, binary=False)
+    logger.info("Creating pred word-morpheme matrix")
+    pred_word_morpheme_graph = predlist.to_word_morpheme_matrix(windex, binary=False)
+    logger.info("Creating morph co-occurrence matrix")
+    morph_cooc_graph = gold_word_morpheme_graph.T @ pred_word_morpheme_graph  # size (M_gold, M_pred)
+    logger.debug(morph_cooc_graph.shape)
+    logger.debug("Gold morphs: %s", goldlist.morphs)
+    logger.debug("Pred morphs: %s", predlist.morphs)
+    logger.debug("Morph co-occurrence graph:\n%s", morph_cooc_graph.toarray())
+    logger.info("Calculating precision")
+    # When calculating precision, several predicted morphemes may assigned to one reference morpheme
+    assign = morph_assignment_matrix(morph_cooc_graph.T)
+    logger.debug("Pred word-morpheme matrix:\n%s", pred_word_morpheme_graph.toarray())
+    logger.debug("Assignments:\n%s", assign.toarray())
+    gold_to_pred = gold_word_morpheme_graph @ assign  # Gold mapped to pred morphs
+    logger.debug("Gold mapped to pred:\n%s", gold_to_pred.toarray())
+    pre = morph_graph_recall(pred_word_morpheme_graph, gold_to_pred)
+    logger.debug(pre)
+    logger.info("Calculating recall")
+    # When calculating recall, several reference morphemes may assigned to one predicted morpheme
+    assign = morph_assignment_matrix(morph_cooc_graph)
+    logger.debug("Gold word-morpheme matrix:\n%s", gold_word_morpheme_graph.toarray())
+    logger.debug("Assignments:\n%s", assign.toarray())
+    pred_to_gold = pred_word_morpheme_graph @ assign  # Gold mapped to pred morphs
+    logger.debug("Pred mapped to gold:\n%s", pred_to_gold.toarray())
+    rec = morph_graph_recall(gold_word_morpheme_graph, pred_to_gold)
+    logger.debug(rec)
+    return pre, rec
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Metrics for unsupervised morphological analysis')
-    parser.add_argument('--metric', '-m', choices=['comma-b0', 'comma-b1'], default='comma-b0', help='metric')
+    parser.add_argument('--metric', '-m', choices=['comma-b0', 'comma-b1', 'emma-2'],
+                        default='comma-b0', help='metric')
     parser.add_argument('--verbose', '-v', action='store_true', help='increase verbosity')
     parser.add_argument('goldFile', type=argparse.FileType('r'), help='gold standard analysis file')
     parser.add_argument('predFile', type=argparse.FileType('r'), help='predicted analysis file')
@@ -181,7 +237,9 @@ if __name__ == '__main__':
     goldlist = AnalysisSet.from_file(args.goldFile)
     logger.info("Loading predicted analyses")
     predlist = AnalysisSet.from_file(args.predFile, vocab=goldlist)
-    if args.metric == 'comma-b1':
+    if args.metric == 'emma-2':
+        pre, rec = emma2(goldlist, predlist)
+    elif args.metric == 'comma-b1':
         pre, rec = comma(goldlist, predlist, diagonals=True)
     else:
         pre, rec = comma(goldlist, predlist, diagonals=False)
