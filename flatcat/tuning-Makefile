@@ -1,0 +1,19 @@
+
+WEIGHTS = 0.001 0.002 0.005 0.01 0.02 0.05 0.1 0.2 0.5 1.0 2.0
+
+PREFIXES = $(addprefix flatcat_w,$(WEIGHTS))
+MODELS = $(addsuffix .tar.gz,$(PREFIXES))
+DEVSETS = $(addsuffix .dev.txt,$(PREFIXES))
+SCORES = $(addsuffix .scores.yaml,$(PREFIXES))
+
+all: $(MODELS) $(DEVSETS) $(SCORES)
+
+flatcat_w%.tar.gz: combined.wordcounts.txt best_baseline.gz
+	flatcat-train best_baseline.gz -p 10 --save-tarball flatcat_w$*.tar.gz --category-separator ⁘ \
+	--corpusweight $* &> train_$*.log
+
+flatcat_w%.dev.txt: flatcat_w%.tar.gz dev.words.txt
+	flatcat-segment flatcat_w$*.tar.gz --remove-nonmorphemes --output flatcat_w$*.dev.txt dev.words.txt --output-format "{compound}\t{analysis}\n"
+
+flatcat_w%.scores.yaml: flatcat_w%.dev.txt dev.seg.txt
+	python ../../src/morphometrics.py -m emma-2 dev.seg.txt flatcat_w$*.dev.txt $@

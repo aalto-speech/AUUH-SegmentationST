@@ -1,0 +1,27 @@
+
+WEIGHTS = 0.001 0.002 0.005 0.01 0.02 0.05 0.1 0.2 0.5 1.0 2.0
+
+PREFIXES = $(addprefix emprune_w,$(WEIGHTS))
+MODELS = $(addsuffix .bin,$(PREFIXES))
+DEVSETS = $(addsuffix .dev.txt,$(PREFIXES))
+SCORES = $(addsuffix .scores.yaml,$(PREFIXES))
+
+all: $(MODELS) $(DEVSETS) $(SCORES)
+
+freq_substr_1M: combined.wordcounts.txt
+	freq_substr.py --traindata-list --lex-size 1000000 --prune-redundant "0" < $< > $@
+
+emprune_w%.bin: freq_substr_1M combined.wordcounts.txt
+	morfessor-emp --em-prune freq_substr_1M --traindata freq_substr_1M --traindata-list -e utf-8 \
+	--prune-criterion mdl --lateen none --freq-distr-cost baseline \
+	--save-segmentation emprune_w$*.bin \
+	--save-parameters emprune_params$*.txt \
+	--save-pseudomodel emprune_pseudomodel$*.gz \
+	--randseed 1 \
+	--corpusweight $* &> train_$*.log
+
+emprune_w%.dev.txt: emprune_w%.bin dev.words.txt
+	morfessor-emp --em-prune emprune_w$*.bin --testdata dev.words.txt --output emprune_w$*.dev.txt --output-format "{compound}\t{analysis}\n"
+
+emprune_w%.scores.yaml: emprune_w%.dev.txt dev.seg.txt
+	python ../../src/morphometrics.py -m emma-2 dev.seg.txt emprune_w$*.dev.txt $@
