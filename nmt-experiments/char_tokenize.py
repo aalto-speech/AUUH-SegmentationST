@@ -64,7 +64,7 @@ if __name__ == "__main__":
     parser.add_argument("input", help="Path to input file (e.g. ../data/fra.word.train.tsv )")
     parser.add_argument("output_prefix", 
             help="Output prefix, will output files: "
-            "prefix.src.txt, prefix.tgt.txt, prefix.src.vocab.yml, prefix.tgt.vocab")
+            "prefix.src.txt, prefix.tgt.txt, prefix.src.vocab, prefix.tgt.vocab")
     args = parser.parse_args()
     run_on_file(args.input, args.output_prefix)
 

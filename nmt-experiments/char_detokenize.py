@@ -4,14 +4,18 @@ import pathlib
 conversions = {"@@": " @@",
                "<w>": " "}
 
+def run_on_line(line):
+    tokens = line.strip().split()
+    tokens = [conversions[token] if token in conversions else token
+              for token in tokens]
+    output = "".join(tokens)
+    return output
+
 def run_on_file(inputfile):
     with open(inputfile) as fin, \
          open(inputfile+".detok", "w") as fout:
         for line in fin:
-            tokens = line.strip().split()
-            tokens = [conversions[token] if token in conversions else token
-                      for token in tokens]
-            output = "".join(tokens)
+            output = run_on_line(line)
             print(output, file=fout)
 
 if __name__ == "__main__":
