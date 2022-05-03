@@ -1,10 +1,10 @@
 early-stopping: 5 
-after-epochs: 2
+after-epochs: 50
 overwrite: true
 keep-best: true
 type: transformer
 enc-depth: 6
-dev-depth: 6
+dec-depth: 6
 transformer-dropout: 0.1
 learn-rate: 0.0003
 lr-warmup: 16000
@@ -16,3 +16,4 @@ optimizer-params:
   - 0.000000001
 clip-norm: 5
 exponential-smoothing: true
+mini-batch: 64
