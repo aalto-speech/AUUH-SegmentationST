@@ -8,6 +8,7 @@
 #SBATCH --gres=gpu:v100:1
 
 DATAROOT="/scratch/project_2005881/2022SegmentationST/data/"
+AUGMENTROOT="/scratch/project_2005881/2022SegmentationST/morfessor/"
 PROCESSED="/scratch/project_2005881/2022SegmentationST/nmt-experiments/processed-data/"
 EXPOUT="/scratch/project_2005881/2022SegmentationST/nmt-experiments/exp/"
 CONFIGDIR="/scratch/project_2005881/2022SegmentationST/nmt-experiments/configs/"
@@ -25,7 +26,7 @@ fi
 
 lang="$1"
 task="$2"
-expdir=${EXPOUT}/${lang}.${task}/${RUN_FAMILY}
+expdir=${EXPOUT}/${lang}.${task}.morfessor/${RUN_FAMILY}
 
 mkdir -p $expdir
 
@@ -33,18 +34,17 @@ source path.sh
 
 ### STAGE 1: Preprocess data ###
 
-if [ -d ${PROCESSED}/${lang}.${task} ]; then
-  echo "Using existing preprocessed data in"
-  echo " ${PROCESSED}/${lang}.${task}"
+if [ -d ${PROCESSED}/${lang}.${task}.morfessor ]; then
+  echo "Using existing preprocessed data in ${PROCESSED}/${lang}.${task}.morfessor"
 else
-  echo "Preprocess data to ${PROCESSED}/${lang}.${task}"
-  mkdir -p ${PROCESSED}/${lang}.${task}
+  echo "Preprocessing data to ${PROCESSED}/${lang}.${task}.morfessor"
+  mkdir -p ${PROCESSED}/${lang}.${task}.morfessor
   python3 char_tokenize.py \
-    ${DATAROOT}/${lang}.${task}.train.tsv \
-    ${PROCESSED}/${lang}.${task}/train
+    ${AUGMENTROOT}/${lang}_best_baseline.train.tsv \
+    ${PROCESSED}/${lang}.${task}.morfessor/train
   python3 char_tokenize.py \
-    ${DATAROOT}/${lang}.${task}.dev.tsv \
-    ${PROCESSED}/${lang}.${task}/dev
+    ${AUGMENTROOT}/${lang}_best_baseline.dev.tsv \
+    ${PROCESSED}/${lang}.${task}.morfessor/dev
 fi
 
 ### STAGE 2: Train model ###
@@ -52,21 +52,21 @@ fi
 marian \
   --model $expdir/model.npz \
   --train-sets \
-    ${PROCESSED}/${lang}.${task}/train.src.txt \
-    ${PROCESSED}/${lang}.${task}/train.tgt.txt \
+    ${PROCESSED}/${lang}.${task}.morfessor/train.src.txt \
+    ${PROCESSED}/${lang}.${task}.morfessor/train.tgt.txt \
   --vocabs \
-    ${PROCESSED}/${lang}.${task}/train.src.vocab \
-    ${PROCESSED}/${lang}.${task}/train.tgt.vocab \
+    ${PROCESSED}/${lang}.${task}.morfessor/train.src.vocab \
+    ${PROCESSED}/${lang}.${task}.morfessor/train.tgt.vocab \
   --valid-sets \
-    ${PROCESSED}/${lang}.${task}/dev.src.txt \
-    ${PROCESSED}/${lang}.${task}/dev.tgt.txt \
+    ${PROCESSED}/${lang}.${task}.morfessor/dev.src.txt \
+    ${PROCESSED}/${lang}.${task}.morfessor/dev.tgt.txt \
   --config ${CONFIGDIR}/${RUN_FAMILY}.yaml
 
 ### STAGE 3: Decode dev data ###
 
 marian-decoder \
   --config ${expdir}/model.npz.best-cross-entropy.npz.decoder.yml \
-  --input ${PROCESSED}/${lang}.${task}/dev.src.txt \
+  --input ${PROCESSED}/${lang}.${task}.morfessor/dev.src.txt \
   --output ${expdir}/decode-dev.txt
 
 ### STAGE 4: Detokenize ###

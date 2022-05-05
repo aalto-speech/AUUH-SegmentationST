@@ -2,6 +2,7 @@
 # Character segmentation on the type of input that Sigmorphon data has
 # NOTE: Currently ignores the possible third column (word class)
 import pathlib
+import warnings
 
 MORPH_SEP = "@@"
 TMP_SEP = "⌨"  # Use cool computer keyboard sign as temporary separator
@@ -44,8 +45,11 @@ def run_on_file(inputfile, out_prefix):
     with open(inputfile) as fin, \
          open(out_prefix+".src.txt", "w") as fo_srctxt, \
          open(out_prefix+".tgt.txt", "w") as fo_tgttxt: 
-        for line in fin:
-            src, tgt = process_line(line)
+        for i, line in enumerate(fin):
+            try:
+                src, tgt = process_line(line)
+            except ValueError:
+                warnings.warn(f"Malformed line {i}:\n{line}")
             src_vocab |= set(src)
             tgt_vocab |= set(tgt)
             print(" ".join(src), file=fo_srctxt)
