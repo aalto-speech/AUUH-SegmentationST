@@ -4,13 +4,12 @@
 #SBATCH --time=16:00:00
 #SBATCH --partition=gpu
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=16G
+#SBATCH --mem=24G
 #SBATCH --gres=gpu:v100:1
 
 DATAROOT="/scratch/project_2005881/2022SegmentationST/data/"
-AUGMENTROOT="/scratch/project_2005881/2022SegmentationST/morfessor/"
 PROCESSED="/scratch/project_2005881/2022SegmentationST/nmt-experiments/processed-data/"
-EXPOUT="/scratch/project_2005881/2022SegmentationST/nmt-experiments/exp/"
+EXPOUT="/scratch/project_2005881/2022SegmentationST/nmt-experiments/exp-fmes/"
 CONFIGDIR="/scratch/project_2005881/2022SegmentationST/nmt-experiments/configs/"
 SEED=5620221720
 
@@ -23,6 +22,7 @@ stage=1
 # parse_options.sh makes it so you can specify e.g. train-baseline.sh --EXPOUT ./exp2
 . parse_options.sh  
 
+
 if [ "$#" -ne 2 ]; then
   echo "Usage: $0 <lang> <task>"
   echo "example: $0 fra word"
@@ -33,23 +33,24 @@ fi
 
 lang="$1"
 task="$2"
-expdir=${EXPOUT}/${lang}.${task}.morfessor/${RUN_FAMILY}-${SEED}
+expdir=${EXPOUT}/${lang}.${task}/${RUN_FAMILY}-${SEED}
 
 mkdir -p $expdir
 
 ### STAGE 1: Preprocess data ###
 if [ $stage -le 1 ]; then
-  if [ -d ${PROCESSED}/${lang}.${task}.morfessor ]; then
-    echo "Using existing preprocessed data in ${PROCESSED}/${lang}.${task}.morfessor"
+  if [ -d ${PROCESSED}/${lang}.${task} ]; then
+    echo "Using existing preprocessed data in"
+    echo " ${PROCESSED}/${lang}.${task}"
   else
-    echo "Preprocessing data to ${PROCESSED}/${lang}.${task}.morfessor"
-    mkdir -p ${PROCESSED}/${lang}.${task}.morfessor
+    echo "Preprocess data to ${PROCESSED}/${lang}.${task}"
+    mkdir -p ${PROCESSED}/${lang}.${task}
     python3 char_tokenize.py \
-      ${AUGMENTROOT}/${lang}_best_baseline.train.tsv \
-      ${PROCESSED}/${lang}.${task}.morfessor/train
+      ${DATAROOT}/${lang}.${task}.train.tsv \
+      ${PROCESSED}/${lang}.${task}/train
     python3 char_tokenize.py \
-      ${AUGMENTROOT}/${lang}_best_baseline.dev.tsv \
-      ${PROCESSED}/${lang}.${task}.morfessor/dev
+      ${DATAROOT}/${lang}.${task}.dev.tsv \
+      ${PROCESSED}/${lang}.${task}/dev
   fi
 fi
 
@@ -58,30 +59,33 @@ fi
 if [ $stage -le 2 ]; then
   marian \
     --model $expdir/model.npz \
+    --tempdir /scratch/project_2005881/2022SegmentationST/nmt-experiments/temp-for-exp \
     --train-sets \
-      ${PROCESSED}/${lang}.${task}.morfessor/train.src.txt \
-      ${PROCESSED}/${lang}.${task}.morfessor/train.tgt.txt \
+      ${PROCESSED}/${lang}.${task}/train.src.txt \
+      ${PROCESSED}/${lang}.${task}/train.tgt.txt \
     --vocabs \
-      ${PROCESSED}/${lang}.${task}.morfessor/train.src.vocab \
-      ${PROCESSED}/${lang}.${task}.morfessor/train.tgt.vocab \
+      ${PROCESSED}/${lang}.${task}/train.src.vocab \
+      ${PROCESSED}/${lang}.${task}/train.tgt.vocab \
     --valid-sets \
-      ${PROCESSED}/${lang}.${task}.morfessor/dev.src.txt \
-      ${PROCESSED}/${lang}.${task}.morfessor/dev.tgt.txt \
+      ${PROCESSED}/${lang}.${task}/dev.src.txt \
+      ${PROCESSED}/${lang}.${task}/dev.tgt.txt \
     --seed ${SEED} \
+    --valid-metrics translation \
+    --valid-script-path /scratch/project_2005881/2022SegmentationST/nmt-experiments/validate.py \
+    --valid-script-args ${DATAROOT}/${lang}.${task}.dev.tsv \
+    --valid-translation-output $expdir/"validation-{U}-updates.txt" \
     --config ${CONFIGDIR}/${RUN_FAMILY}.yaml
 fi
 
 ### STAGE 3: Decode dev data ###
-
 if [ $stage -le 3 ]; then
   marian-decoder \
-    --config ${expdir}/model.npz.best-cross-entropy.npz.decoder.yml \
-    --input ${PROCESSED}/${lang}.${task}.morfessor/dev.src.txt \
+    --config ${expdir}/model.npz.best-translation.npz.decoder.yml \
+    --input ${PROCESSED}/${lang}.${task}/dev.src.txt \
     --output ${expdir}/decode-dev.txt
 fi
 
 ### STAGE 4: Detokenize ###
-
 if [ $stage -le 4 ]; then
   python3 char_detokenize.py ${expdir}/decode-dev.txt ${DATAROOT}/${lang}.${task}.dev.tsv ${expdir}/decode-dev.tsv
 fi

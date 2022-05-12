@@ -1,0 +1,28 @@
+early-stopping: 5 
+after-epochs: 50
+overwrite: true
+keep-best: true
+
+type: transformer
+enc-depth: 5
+dec-depth: 5
+transformer-dropout: 0.3
+learn-rate: 0.0003
+lr-warmup: 16000
+lr-decay-inv-sqrt: 16000
+lr-report: true
+optimizer-params:
+  - 0.9
+  - 0.98
+  - 0.000000001
+clip-norm: 5
+exponential-smoothing: true
+mini-batch-words: 4096
+label-smoothing: 0.5
+transformer-dim-ffn: 512
+transformer-dropout-ffn: 0.3
+transformer-heads: 2
+dropout-src: 0.1
+dropout-trg: 0.1
+
+cost-type: "ce-mean-words"

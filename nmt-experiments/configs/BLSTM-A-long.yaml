@@ -1,0 +1,33 @@
+# This config attempts to replicate https://arxiv.org/pdf/1905.11901.pdf
+# by Sennrich and Zhang
+# an architecture for low-resource NMT
+
+dim-rnn: 1024
+dim-emb: 128 # 512 in the paper but we have character level models.
+layer-normalization: true
+tied-embeddings: true  # this just ties the target side
+enc-type: "bidirectional"
+enc-cell: "gru"
+dec-cell: "gru"
+enc-depth: 1
+dec-depth: 1
+dec-cell-base-depth: 2
+
+optimizer: adam
+learn-rate: 0.0005
+cost-type: "ce-mean-words"
+label-smoothing: 0.2
+clip-norm: 10  # clipping value was not mentioned in paper I think, conservative guess here
+sync-sgd: true  # Only matters for multi-gpu
+mini-batch-words: 1000
+maxi-batch: 100  # preload this many batches for sorting
+# Note: paper also had embedding dropout, not implemented in Marian
+dropout-rnn: 0.5
+dropout-src: 0.3
+dropout-trg: 0.3
+
+keep-best: true
+early-stopping: 5 
+after-epochs: 50
+
+max-length: 512

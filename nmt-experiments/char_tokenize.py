@@ -7,11 +7,15 @@ import warnings
 MORPH_SEP = "@@"
 TMP_SEP = "⌨"  # Use cool computer keyboard sign as temporary separator
 SPACE_TOKEN = "<w>"
+LANG_TOKENS = ["<eng>", "<ces>", "<mon>", "<fra>", "<hun>", "<ita>", "<lat>", "<rus>", "<spa>"]
 MARIAN_TOKENS = ["</s>", "<unk>"]
 
 def tokenize(raw):
-    separated = raw.replace(" "+MORPH_SEP, TMP_SEP)
     outputs = []
+    if raw[:5] in LANG_TOKENS:
+        outputs.append(raw[:5])
+        raw = raw[5:]
+    separated = raw.replace(" "+MORPH_SEP, TMP_SEP)
     for char in separated:
         if char == " ":
             outputs.append(SPACE_TOKEN)

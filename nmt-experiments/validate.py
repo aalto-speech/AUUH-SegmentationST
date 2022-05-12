@@ -4,9 +4,9 @@
 
 import evaluate as ev
 
-def get_overall_stats(goldfile, guessfile)
+def get_overall_stats(goldfile, guessfile):
     gold_data = ev.read_tsv(goldfile, False)
-    guess_data = (guessfile, False)  # only second column is needed
+    guess_data = ev.read_tsv(guessfile, False)  # only second column is needed
     assert len(gold_data["segments"]) == len(guess_data["segments"]), \
         "gold and guess tsvs do not have the same number of entries"
     # levenshtein distance can be computed separately for each pair
@@ -35,7 +35,7 @@ if __name__ == "__main__":
             type = pathlib.Path)
     parser.add_argument("--measure_name", default="f_measure")
     args = parser.parse_args()
-    guessfile = args.decoded.with_suffix("tsv")
+    guessfile = args.decoded.with_suffix(".tsv")
     run_detokenization(
             translationfile=args.decoded, 
             metadatafile=args.gold, 

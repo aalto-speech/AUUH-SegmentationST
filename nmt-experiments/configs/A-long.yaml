@@ -1,0 +1,20 @@
+early-stopping: 5 
+after-epochs: 50
+overwrite: true
+keep-best: true
+type: transformer
+enc-depth: 6
+dec-depth: 6
+transformer-dropout: 0.1
+learn-rate: 0.0003
+lr-warmup: 16000
+lr-decay-inv-sqrt: 16000
+lr-report: true
+optimizer-params:
+  - 0.9
+  - 0.98
+  - 0.000000001
+clip-norm: 5
+exponential-smoothing: true
+mini-batch: 64
+max-length: 512
