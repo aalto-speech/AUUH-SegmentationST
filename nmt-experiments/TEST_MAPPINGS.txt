@@ -1,0 +1,28 @@
+AUUH_A:
+  - Trafo-C-long
+  - multiling (eng,ces,mon) (word+sentence)
+  - morfessor baseline
+
+AUUH_B:
+  - Trafo-C-long
+  - multiling (eng,ces,mon) (word+sentence)
+  - NOTE: word level models were finetuned on word only data (without word-task symbol)
+    This was just an accident - but it makes comparisons with AUUH_A word tasks a little off
+
+AUUH_C:
+  - BLSTM-A-long  [NOTE: long vs non-long is just a matter of max input length]
+  - monoling (word+sentence)
+  - morfessor
+
+AUUH_D:
+  - BLSTM-A-long
+  - monoling (word+sentence)
+
+AUUH_E:
+  - BLSTM-A
+  - monoling (word)
+  - morfessor
+
+AUUH_F:
+  - BLSTM-A
+  - monoling (word)

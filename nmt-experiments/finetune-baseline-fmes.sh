@@ -1,20 +1,22 @@
 #!/bin/bash
 #SBATCH --job-name=train-nmt
 #SBATCH --account=project_2005881
-#SBATCH --time=6:00:00
+#SBATCH --time=4:00:00
 #SBATCH --partition=gpu
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=24G
 #SBATCH --gres=gpu:v100:1
 
-DATAROOT="/scratch/project_2005881/2022SegmentationST/data/"
-PROCESSED="/scratch/project_2005881/2022SegmentationST/nmt-experiments/processed-data/"
-EXPOUT="/scratch/project_2005881/2022SegmentationST/nmt-experiments/exp-fmes/"
+DATAROOT="/scratch/project_2005881/2022SegmentationST/nmt-experiments/multiling-data/"
+PROCESSED="/scratch/project_2005881/2022SegmentationST/nmt-experiments/multiling-processed-data/"
+EXPOUT="/scratch/project_2005881/2022SegmentationST/nmt-experiments/exp-multiling-fmes/"
 CONFIGDIR="/scratch/project_2005881/2022SegmentationST/nmt-experiments/configs/"
 SEED=5620221720
+PRETRAIN_SEED=5620221720
 
 # CHANGE THIS TO TRAIN OTHER CONFIGURATIONS:
-RUN_FAMILY="A"
+RUN_FAMILY="BLSTM-A-long"
+PRETRAIN_FAMILY="BLSTM-A-long"
 
 stage=1
 
@@ -57,14 +59,16 @@ fi
 ### STAGE 2: Train model ###
 
 if [ $stage -le 2 ]; then
+  # NOTE: From the all.sentence model we can only finetune mon,ces,eng
   marian \
     --model $expdir/model.npz \
+    --pretrained-model ./exp-multiling-fmes/all.sentence/${PRETRAIN_FAMILY}-${PRETRAIN_SEED}/model.npz.best-translation.npz \
     --train-sets \
       ${PROCESSED}/${lang}.${task}/train.src.txt \
       ${PROCESSED}/${lang}.${task}/train.tgt.txt \
     --vocabs \
-      ${PROCESSED}/${lang}.${task}/train.src.vocab \
-      ${PROCESSED}/${lang}.${task}/train.tgt.vocab \
+      ${PROCESSED}/all.sentence/train.src.vocab \
+      ${PROCESSED}/all.sentence/train.tgt.vocab \
     --valid-sets \
       ${PROCESSED}/${lang}.${task}/dev.src.txt \
       ${PROCESSED}/${lang}.${task}/dev.tgt.txt \

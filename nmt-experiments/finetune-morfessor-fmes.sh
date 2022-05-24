@@ -1,28 +1,31 @@
 #!/bin/bash
 #SBATCH --job-name=train-nmt
 #SBATCH --account=project_2005881
-#SBATCH --time=6:00:00
+#SBATCH --time=4:00:00
 #SBATCH --partition=gpu
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=24G
+#SBATCH --mem=32G
 #SBATCH --gres=gpu:v100:1
 
 DATAROOT="/scratch/project_2005881/2022SegmentationST/data/"
-AUGMENTROOT="/scratch/project_2005881/2022SegmentationST/morfessor/"
-PROCESSED="/scratch/project_2005881/2022SegmentationST/nmt-experiments/processed-data/"
-EXPOUT="/scratch/project_2005881/2022SegmentationST/nmt-experiments/exp-fmes/"
+AUGMENTROOT="/scratch/project_2005881/2022SegmentationST/nmt-experiments/multiling-morfessor-data/"
+PROCESSED="/scratch/project_2005881/2022SegmentationST/nmt-experiments/multiling-morfessor-processed-data/"
+EXPOUT="/scratch/project_2005881/2022SegmentationST/nmt-experiments/exp-multiling-fmes/"
 CONFIGDIR="/scratch/project_2005881/2022SegmentationST/nmt-experiments/configs/"
 SEED=5620221720
+PRETRAIN_SEED=5620221720
 weight="best"
 
 # CHANGE THIS TO TRAIN OTHER CONFIGURATIONS:
-RUN_FAMILY="A"
+RUN_FAMILY="Trafo-C-long"
+PRETRAIN_FAMILY="Trafo-C-long"
 
 stage=1
 
 . path.sh
 # parse_options.sh makes it so you can specify e.g. train-baseline.sh --EXPOUT ./exp2
 . parse_options.sh  
+
 
 if [ "$#" -ne 2 ]; then
   echo "Usage: $0 <lang> <task>"
@@ -63,17 +66,20 @@ if [ $stage -le 1 ]; then
   fi
 fi
 
+
 ### STAGE 2: Train model ###
 
 if [ $stage -le 2 ]; then
+  # NOTE: Just finetuning from all.sentence model only works for eng,ces,mon
   marian \
     --model $expdir/model.npz \
+    --pretrained-model ./exp-multiling-fmes/all.sentence.morfessor_${weight}/${PRETRAIN_FAMILY}-${PRETRAIN_SEED}/model.npz.best-translation.npz \
     --train-sets \
       ${PROCESSED}/${lang}.${task}.morfessor_${weight}/train.src.txt \
       ${PROCESSED}/${lang}.${task}.morfessor_${weight}/train.tgt.txt \
     --vocabs \
-      ${PROCESSED}/${lang}.${task}.morfessor_${weight}/train.src.vocab \
-      ${PROCESSED}/${lang}.${task}.morfessor_${weight}/train.tgt.vocab \
+      ${PROCESSED}/all.sentence.morfessor_${weight}/train.src.vocab \
+      ${PROCESSED}/all.sentence.morfessor_${weight}/train.tgt.vocab \
     --valid-sets \
       ${PROCESSED}/${lang}.${task}.morfessor_${weight}/dev.src.txt \
       ${PROCESSED}/${lang}.${task}.morfessor_${weight}/dev.tgt.txt \
@@ -86,7 +92,6 @@ if [ $stage -le 2 ]; then
 fi
 
 ### STAGE 3: Decode dev data ###
-
 if [ $stage -le 3 ]; then
   marian-decoder \
     --config ${expdir}/model.npz.best-translation.npz.decoder.yml \
@@ -95,7 +100,6 @@ if [ $stage -le 3 ]; then
 fi
 
 ### STAGE 4: Detokenize ###
-
 if [ $stage -le 4 ]; then
   python3 char_detokenize.py ${expdir}/decode-dev.txt ${DATAROOT}/${lang}.${task}.dev.tsv ${expdir}/decode-dev.tsv
 fi
