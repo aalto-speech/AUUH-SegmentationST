@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=train-nmt
 #SBATCH --account=project_2005881
-#SBATCH --time=6:00:00
+#SBATCH --time=24:00:00
 #SBATCH --partition=gpu
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=24G
+#SBATCH --mem=32G
 #SBATCH --gres=gpu:v100:1
 
 DATAROOT="/scratch/project_2005881/2022SegmentationST/data/"

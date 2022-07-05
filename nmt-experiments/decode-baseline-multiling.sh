@@ -43,8 +43,9 @@ if [ "$task" == "sentence" ]; then
   sed "s/^/<$lang>/g" ${TESTDATA}/${dataname}.tsv > ${PROCESSED}/${sysname}/${dataname}.specials
 else
   #NOTE: Here the word level model was accidentally finetuned without the word task symbol
-  sed "s/^/<$lang>/g" ${TESTDATA}/${dataname}.tsv > ${PROCESSED}/${sysname}/${dataname}.specials
-  #sed "s/^/<$lang>⌬/g" ${TESTDATA}/${dataname}.tsv > ${PROCESSED}/${sysname}/${dataname}.specials
+  #sed "s/^/<$lang>/g" ${TESTDATA}/${dataname}.tsv > ${PROCESSED}/${sysname}/${dataname}.specials
+  # BUT IT WAS FIXED!
+  sed "s/^/<$lang>⌬/g" ${TESTDATA}/${dataname}.tsv > ${PROCESSED}/${sysname}/${dataname}.specials
 fi
 
 python3 char_tokenize_input_only.py ${PROCESSED}/${sysname}/${dataname}.specials ${PROCESSED}/${sysname}/${dataname}.txt

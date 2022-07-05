@@ -29,7 +29,7 @@ task="$2"
 sysname="$3"
 dataname=${lang}.${task}.${SUBSET}
 # Note: "_best" missing from the morfessor models here
-modeldir=${EXPDIR}/${lang}.${task}.morfessor/${RUN_FAMILY}-${SEED}/
+modeldir=${EXPDIR}/${lang}.${task}.morfessor_best/${RUN_FAMILY}-${SEED}/
 morfessormdl="../morfessor//${lang}_best_baseline.bin"
 
 mkdir -p ${PROCESSED}/$sysname

@@ -8,14 +8,17 @@ AUUH_B:
   - multiling (eng,ces,mon) (word+sentence)
   - NOTE: word level models were finetuned on word only data (without word-task symbol)
     This was just an accident - but it makes comparisons with AUUH_A word tasks a little off
+    - fixed this for the paper!
 
 AUUH_C:
   - BLSTM-A-long  [NOTE: long vs non-long is just a matter of max input length]
+    - Note: for CES and MON we used BLSTM-A-long-morevalid (which just runs validation more often)
   - monoling (word+sentence)
   - morfessor
 
 AUUH_D:
   - BLSTM-A-long
+    - Note: for CES and MON we used BLSTM-A-long-morevalid (which just runs validation more often)
   - monoling (word+sentence)
 
 AUUH_E:

@@ -4,7 +4,7 @@
 #SBATCH --time=4:00:00
 #SBATCH --partition=gpu
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=24G
+#SBATCH --mem=32G
 #SBATCH --gres=gpu:v100:1
 
 DATAROOT="/scratch/project_2005881/2022SegmentationST/nmt-experiments/multiling-data/"
@@ -15,8 +15,8 @@ SEED=5620221720
 PRETRAIN_SEED=5620221720
 
 # CHANGE THIS TO TRAIN OTHER CONFIGURATIONS:
-RUN_FAMILY="BLSTM-A-long"
-PRETRAIN_FAMILY="BLSTM-A-long"
+RUN_FAMILY="Trafo-C-long"
+PRETRAIN_FAMILY="Trafo-C-long"
 
 stage=1
 
